@@ -90,7 +90,7 @@ The app will open in your browser at `http://localhost:8501`
 2. **Enter Your Information**
    - Your Name: TENNETY MAHESH DATTATREYA
    - Email Address: tennetymaheshdattatreya@gmail.com
-   - Job Description (Optional): [Target job description for ATS matching]
+   
 
 3. **Click "Enhance Resume"**
    - App extracts text from PDF
