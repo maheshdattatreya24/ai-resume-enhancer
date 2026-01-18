@@ -11,7 +11,8 @@ import json
 import zipfile
 from datetime import datetime
 from fpdf import FPDF
-from sklearn.feature_extraction.text import TfidfVectorizer
+from collections import Counter
+import math
 
 try:
     from docx import Document
@@ -57,11 +58,71 @@ def extract_text_from_pdf(uploaded_file) -> str:
 
 
 # ======================================================
-# ATS Keyword Extraction (from ats.py)
+# Pure Python TF-IDF Implementation (No scikit-learn)
+# ======================================================
+def tokenize(text: str) -> list:
+    """Tokenize text into words"""
+    text = text.lower()
+    words = re.findall(r'\b[a-z]+(?:[_-][a-z]+)*\b', text)
+    stop_words = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+        'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'have',
+        'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+        'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i',
+        'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who', 'when',
+        'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more',
+        'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'same',
+        'so', 'than', 'too', 'very', 'as', 'if', 'just', 'about', 'into'
+    }
+    return [w for w in words if w not in stop_words and len(w) > 2]
+
+
+def extract_ngrams(words: list, n: int = 2) -> list:
+    """Extract n-grams from word list"""
+    ngrams = []
+    for i in range(len(words) - n + 1):
+        ngrams.append(' '.join(words[i:i+n]))
+    return ngrams
+
+
+def calculate_tfidf(documents: list) -> dict:
+    """Calculate TF-IDF for documents"""
+    all_words = []
+    doc_tokens = []
+    
+    for doc in documents:
+        tokens = tokenize(doc)
+        doc_tokens.append(tokens)
+        all_words.extend(tokens)
+    
+    idf = {}
+    total_docs = len(documents)
+    
+    # Calculate IDF
+    for word in set(all_words):
+        docs_with_word = sum(1 for tokens in doc_tokens if word in tokens)
+        idf[word] = math.log(total_docs / (docs_with_word + 1))
+    
+    # Calculate TF-IDF
+    tfidf_scores = {}
+    for i, tokens in enumerate(doc_tokens):
+        tf = Counter(tokens)
+        for word, count in tf.items():
+            tfidf = (count / len(tokens)) * idf.get(word, 0) if tokens else 0
+            if tfidf > 0.01:
+                if word not in tfidf_scores:
+                    tfidf_scores[word] = []
+                tfidf_scores[word].append((i, tfidf))
+    
+    return tfidf_scores
+
+
+# ======================================================
+# ATS Keyword Extraction (Pure Python)
 # ======================================================
 def extract_keywords(job_description: str) -> list:
     """
-    Extract ATS keywords from job description using TF-IDF
+    Extract ATS keywords from job description using Pure Python TF-IDF
     
     Args:
         job_description: Job description text
@@ -78,29 +139,25 @@ def extract_keywords(job_description: str) -> list:
         'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'agile', 'scrum',
         'project management', 'leadership', 'communication', 'analytics',
         'deep learning', 'neural networks', 'nlp', 'computer vision',
-        'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn',
-        'git', 'github', 'ci/cd', 'rest api', 'microservices'
+        'tensorflow', 'pytorch', 'pandas', 'numpy',
+        'git', 'github', 'cicd', 'rest api', 'microservices', 'api', 'database'
     ]
     
-    # Use TF-IDF to extract important terms
-    vectorizer = TfidfVectorizer(
-        stop_words='english', 
-        max_features=30, 
-        ngram_range=(1, 2),
-        lowercase=True
-    )
-    
     try:
-        tfidf_matrix = vectorizer.fit_transform([job_description.lower()])
-        feature_names = vectorizer.get_feature_names_out()
-        scores = tfidf_matrix.toarray()[0]
+        # Tokenize job description
+        tokens = tokenize(job_description)
         
-        # Get top keywords by score
-        keyword_scores = list(zip(feature_names, scores))
-        keyword_scores.sort(key=lambda x: x[1], reverse=True)
-        extracted = [kw for kw, score in keyword_scores[:20] if score > 0]
+        # Extract 1-grams and 2-grams
+        unigrams = tokens
+        bigrams = extract_ngrams(tokens, 2)
+        all_terms = unigrams + bigrams
         
-        # Also check for common keywords in job description
+        # Get TF scores (frequency-based since we only have one doc)
+        term_freq = Counter(all_terms)
+        sorted_terms = sorted(term_freq.items(), key=lambda x: x[1], reverse=True)
+        extracted = [term for term, count in sorted_terms[:20] if count >= 1]
+        
+        # Also check for common keywords
         jd_lower = job_description.lower()
         found_common = [kw for kw in common_keywords if kw in jd_lower]
         
@@ -138,7 +195,7 @@ def merge_keywords(resume_text: str, keywords: list) -> str:
 # AI / NLP Logic - Enhanced Summaries & STAR Format
 # ======================================================
 def enhance_resume(resume_text: str, job_description: str = "") -> str:
-    """Generate enhanced professional summary"""
+    """Generate enhanced professional summary using Pure Python"""
     resume_text = " ".join(resume_text.split())
 
     if not resume_text:
@@ -147,11 +204,10 @@ def enhance_resume(resume_text: str, job_description: str = "") -> str:
             "gain professional experience, and contribute effectively to organizational goals."
         )
 
-    vectorizer = TfidfVectorizer(stop_words="english", max_features=40)
-    tfidf = vectorizer.fit_transform([resume_text])
-    keywords = vectorizer.get_feature_names_out()
-
-    top_keywords = list(keywords[:8]) if len(keywords) >= 8 else list(keywords)
+    # Extract top keywords using pure Python
+    tokens = tokenize(resume_text)
+    term_freq = Counter(tokens)
+    top_keywords = [word for word, count in term_freq.most_common(8)]
 
     if not top_keywords:
         top_keywords = ["problem solving", "communication", "teamwork"]
