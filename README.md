@@ -88,8 +88,8 @@ The app will open in your browser at `http://localhost:8501`
    - Select your existing resume PDF file
 
 2. **Enter Your Information**
-   - Your Name: [Your full name]
-   - Email Address: [Your email]
+   - Your Name: TENNETY MAHESH DATTATREYA
+   - Email Address: tennetymaheshdattatreya@gmail.com
    - Job Description (Optional): [Target job description for ATS matching]
 
 3. **Click "Enhance Resume"**
@@ -416,7 +416,7 @@ Contributions are welcome! Here's how to contribute:
 - 📖 Check [Troubleshooting](#-troubleshooting) section
 - 🐛 Open an issue on GitHub
 - 💬 Start a discussion in GitHub Discussions
-- 📧 Contact: your-email@example.com
+- 📧 Contact:  tennetymaheshdattatreya@gmail.com
 
 ### Reporting Bugs
 Include:
@@ -459,10 +459,10 @@ Include:
 
 ## 📞 Contact & Feedback
 
-- **GitHub**: [Your GitHub Profile]
-- **Email**: your-email@example.com
-- **Website**: [Your Website]
-- **LinkedIn**: [Your LinkedIn]
+- **GitHub**: [https://github.com/maheshdattatreya24]
+- **Email**: [tennetymaheshdattatreya@gmail.com]
+- **Website**: N/A
+- **LinkedIn**: [https://www.linkedin.com/in/mahesh-dattatreya-tennety/]
 
 ## 🙏 Acknowledgments
 
